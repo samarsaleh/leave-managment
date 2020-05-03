@@ -1,0 +1,35 @@
+﻿@model leave_managment.Models.CreateLeaveAllocationVM
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                leave types
+            </th>
+  >
+            <th>action</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Leavetypes) { // which contains the list 
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+        
+            <td>
+                @Html.ActionLink("Allocate to Employees", "SetLeave", new {id= item.Id},new { @class ="btn btn-success"})
+                
+              
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

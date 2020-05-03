@@ -10,8 +10,10 @@ namespace leave_managment.Data
     {
         [Key]
         public int Id { get; set; }
-        [Required]
+        
         public string Name { get; set; }
+        public int DefaultDays { get; set; } // for ech type 
+
         public DateTime DateCreated { get; set; }
 
     }

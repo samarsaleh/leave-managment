@@ -1,5 +1,6 @@
 ﻿using leave_managment.Contracts;
 using leave_managment.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,15 @@ namespace leave_managment.Repository
         {
             _db = db;
         }
+
+        public bool CheckAllocation(int leavetypeid, string employeeid)
+        {
+            //check the id
+            var period = DateTime.Now.Year;
+            //any is used because this expressin is returning a collection while the func is return a bool 
+            return FindAll().Where(q => q.EmployeeId == employeeid && q.LeaveTypeId == leavetypeid && q.Period == period).Any();
+        }
+
         public bool create(LeaveAllocation entity)
         {
             _db.LeaveAllocations.Add(entity);
@@ -32,14 +42,35 @@ namespace leave_managment.Repository
         public ICollection<LeaveAllocation> FindAll()
         {
             //from database so we need _db we can access any thing in the context 
-            return _db.LeaveAllocations.ToList();
+           var leaveallocations= _db.LeaveAllocations
+                .Include(q=>q.LeaveType)
+                .Include(q=>q.Employee)
+                .ToList(); //cuz in details employee view we use leavetype
             //var leavetypes=_db.LeaveTypes.ToList();
+            return leaveallocations;
         }
 
         public LeaveAllocation FindById(int id)
         {
-            var LeaveAllocation = _db.LeaveAllocations.Find(id);
+            var LeaveAllocation = _db.LeaveAllocations
+                 .Include(q => q.LeaveType)
+                .Include(q => q.Employee)
+                .FirstOrDefault(q=>q.Id==id);
             return LeaveAllocation;
+        }
+        //instead of find all 
+        public ICollection<LeaveAllocation> GetLeaveAllocationsByEmployee(string id)
+        {
+            //allocation matching the period 
+            var period = DateTime.Now.Year;
+            return FindAll().Where(q => q.EmployeeId == id &&q.Period==period).ToList();
+        }
+
+        public LeaveAllocation GetLeaveAllocationsByEmployeeAndType(string id, int leaveTypeid)
+        {
+            var period = DateTime.Now.Year;
+            return FindAll().FirstOrDefault(q => q.EmployeeId == id && q.Period == period && q.LeaveTypeId == leaveTypeid);
+                
         }
 
         public bool isExist(int id)

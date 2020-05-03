@@ -1,5 +1,6 @@
 ﻿using leave_managment.Contracts;
 using leave_managment.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using System;
 using System.Collections.Generic;
@@ -35,12 +36,13 @@ namespace leave_managment.Repository
         {
             //from database so we need _db we can access any thing in the context 
             return _db.LeaveTypes.ToList();
+                                
             //var leavetypes=_db.LeaveTypes.ToList();
         }
 
         public LeaveType FindById(int id)
         {
-            var leavetype = _db.LeaveTypes.Find(id);            
+            var leavetype = _db.LeaveTypes.Find(id);
             return leavetype;
         }
 

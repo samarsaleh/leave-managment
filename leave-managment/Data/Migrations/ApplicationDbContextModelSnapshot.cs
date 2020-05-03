@@ -244,6 +244,9 @@ namespace leave_managment.Data.Migrations
                     b.Property<int>("NumberOfDays")
                         .HasColumnType("int");
 
+                    b.Property<int>("Period")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
@@ -253,7 +256,7 @@ namespace leave_managment.Data.Migrations
                     b.ToTable("LeaveAllocations");
                 });
 
-            modelBuilder.Entity("leave_managment.Data.LeaveHistory", b =>
+            modelBuilder.Entity("leave_managment.Data.LeaveRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -266,6 +269,9 @@ namespace leave_managment.Data.Migrations
                     b.Property<string>("ApprovedById")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("DateActioned")
                         .HasColumnType("datetime2");
 
@@ -277,6 +283,9 @@ namespace leave_managment.Data.Migrations
 
                     b.Property<int>("LeaveTypeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("RequestComments")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RequestingEmployeeId")
                         .HasColumnType("nvarchar(450)");
@@ -292,7 +301,7 @@ namespace leave_managment.Data.Migrations
 
                     b.HasIndex("RequestingEmployeeId");
 
-                    b.ToTable("LeaveHistories");
+                    b.ToTable("LeaveRequests");
                 });
 
             modelBuilder.Entity("leave_managment.Data.LeaveType", b =>
@@ -305,13 +314,120 @@ namespace leave_managment.Data.Migrations
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DefaultDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LeaveTypes");
+                });
+
+            modelBuilder.Entity("leave_managment.Models.EmployeeVM", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateJoined")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Firstname")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Lastname")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaxId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmployeeVM");
+                });
+
+            modelBuilder.Entity("leave_managment.Models.LeaveRequestVM", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool?>("Approved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ApprovedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("DateActioned")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateRequested")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LeaveTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestComments")
+                        .HasColumnType("nvarchar(300)")
+                        .HasMaxLength(300);
+
+                    b.Property<string>("RequestingEmployeeId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedById");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("RequestingEmployeeId");
+
+                    b.ToTable("leaveRequestVMs");
+                });
+
+            modelBuilder.Entity("leave_managment.Models.LeaveTypeVM", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DefaultDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("LeaveTypes");
+                    b.ToTable("LeaveTypeVM");
                 });
 
             modelBuilder.Entity("leave_managment.Data.Employee", b =>
@@ -400,7 +516,7 @@ namespace leave_managment.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("leave_managment.Data.LeaveHistory", b =>
+            modelBuilder.Entity("leave_managment.Data.LeaveRequest", b =>
                 {
                     b.HasOne("leave_managment.Data.Employee", "ApprovedBy")
                         .WithMany()
@@ -413,6 +529,23 @@ namespace leave_managment.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("leave_managment.Data.Employee", "RequestingEmployee")
+                        .WithMany()
+                        .HasForeignKey("RequestingEmployeeId");
+                });
+
+            modelBuilder.Entity("leave_managment.Models.LeaveRequestVM", b =>
+                {
+                    b.HasOne("leave_managment.Models.EmployeeVM", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedById");
+
+                    b.HasOne("leave_managment.Models.LeaveTypeVM", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("leave_managment.Models.EmployeeVM", "RequestingEmployee")
                         .WithMany()
                         .HasForeignKey("RequestingEmployeeId");
                 });

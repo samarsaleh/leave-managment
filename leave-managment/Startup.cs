@@ -38,21 +38,28 @@ namespace leave_managment
             //add referance for repository and contracts to startup file
             //
             services.AddScoped<ILeaveTypeRepository, LeaveTypeRepository>();
-            services.AddScoped<ILeaveHistoryRepository, LeaveHistoryRepository>();
+            services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
             services.AddScoped<ILeaveAllocationRepository, LeaveAllocationRepository>();
             // mapping 
             services.AddAutoMapper(typeof(Maps));
 
 
-
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            //chnaged from identityuser to employee 
+            services.AddDefaultIdentity<Employee>(/*options => {options.SignIn.RequireConfirmedAccount = true*/)//dont need to confirm email
+             //add seeds to the DB about roles
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IWebHostEnvironment env,
+            UserManager<Employee> userManager,
+            RoleManager<IdentityRole> roleManager
+            )
         {
             if (env.IsDevelopment())
             {
@@ -72,6 +79,9 @@ namespace leave_managment
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            //my work, cuz its static its just need the name of the function
+            SeedData.Seed(userManager, roleManager);
 
             app.UseEndpoints(endpoints =>
             {
