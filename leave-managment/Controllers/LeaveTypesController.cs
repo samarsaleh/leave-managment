@@ -9,6 +9,7 @@ using leave_managment.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace leave_managment.Controllers
 {
@@ -27,23 +28,24 @@ namespace leave_managment.Controllers
         }
         
         // GET: LeaveTypes
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
-            var leavetypes = _repo.FindAll().ToList(); // returning collection of leavetype OBJECTS
+            var leavetypes = await _repo.FindAll();// returning collection of leavetype OBJECTS
             //so its need to map to get data from data class using the view model 
-            var model = _mapper.Map<List<LeaveType>, List<LeaveTypeVM>>(leavetypes);//note returning types 
+            var model = _mapper.Map<List<LeaveType>, List<LeaveTypeVM>>(leavetypes.ToList());//note returning types 
             //or using ICollection instead of list 
             return View(model);
         }
 
         // GET: LeaveTypes/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            if (!_repo.isExist(id))
+            var isExist = await _repo.isExist(id);
+            if (!isExist)
             {
                 return NotFound();
             }
-            var leaveType = _repo.FindById(id);
+            var leaveType = await _repo.FindById(id);
             var model = _mapper.Map<LeaveTypeVM>(leaveType);
             return View(model);
         }
@@ -57,10 +59,11 @@ namespace leave_managment.Controllers
         // POST: LeaveTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(LeaveTypeVM model)// according to our data class 
+        public async Task<ActionResult> Create(LeaveTypeVM model)// according to our data class 
         {
             try
             {
+
                 // TODO: Add insert logic here
                 // if the data is valid 
                 if (!ModelState.IsValid)
@@ -69,7 +72,7 @@ namespace leave_managment.Controllers
                 }
                 var leaveType = _mapper.Map<LeaveType>(model); //mapping the data to leave type 
                 leaveType.DateCreated = DateTime.Now;
-                var isSuccess= _repo.create(leaveType);
+                var isSuccess= await _repo.create(leaveType);
                 if (!isSuccess)
                 {
                     ModelState.AddModelError("", "Something went wrong samoora..");
@@ -85,13 +88,14 @@ namespace leave_managment.Controllers
         }
 
         // GET: LeaveTypes/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(int id)
         {
-            if(!_repo.isExist(id))
+            var isExist = await _repo.isExist(id);
+            if (!isExist)
             {
                 return NotFound();
             }
-            var leaveType = _repo.FindById(id);
+            var leaveType = await _repo.FindById(id);
             var model = _mapper.Map<LeaveTypeVM>(leaveType);
             return View(model);
         }
@@ -99,7 +103,7 @@ namespace leave_managment.Controllers
         // POST: LeaveTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(LeaveTypeVM model)
+        public async Task<ActionResult> Edit(LeaveTypeVM model)
         {
             try
             {
@@ -108,7 +112,7 @@ namespace leave_managment.Controllers
                     return View(model);
                 }
                 var leaveType = _mapper.Map<LeaveType>(model); //mapping the data to leave type 
-                var isSuccess = _repo.update(leaveType);
+                var isSuccess = await  _repo.update(leaveType);
 
 
                 // TODO: Add update logic here
@@ -128,7 +132,7 @@ namespace leave_managment.Controllers
 
         // GET: LeaveTypes/Delete/5
         //basicly if for confimation
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
          /*   if (!_repo.isExist(id))
             {
@@ -138,12 +142,12 @@ namespace leave_managment.Controllers
             var model = _mapper.Map<LeaveTypeVM>(leaveType);
             return View(model);*/
 
-            var leaveType = _repo.FindById(id);
+            var leaveType =await _repo.FindById(id);
             if (leaveType == null)
             {
                 return NotFound();
             }
-            var isSuccess = _repo.Delete(leaveType);// shofe the return lal function 
+            var isSuccess = await _repo.Delete(leaveType);// shofe the return lal function 
             if (!isSuccess)
             {
 

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
 namespace leave_managment.Repository
 {
     public class LeaveRequestRepository : ILeaveRequestRepository
@@ -16,68 +15,69 @@ namespace leave_managment.Repository
         {
             _db = db;
         }
-        public bool create(LeaveRequest entity)
+        public async Task<bool> create(LeaveRequest entity)
         {
-            _db.LeaveRequests.Add(entity);
-            return Save();
+           await _db.LeaveRequests.AddAsync(entity);
+            return await Save();
             //save
         }
 
-        public bool Delete(LeaveRequest entity)
+        public async Task<bool> Delete(LeaveRequest entity)
         {
             _db.LeaveRequests.Remove(entity);
             //need to be saved after change using save()
-            return Save();
+            return await Save();
         }
         //returns all the recored in the table  which is here a class
-        public ICollection<LeaveRequest> FindAll()
+        public async Task<ICollection<LeaveRequest>> FindAll()
         {
 
-            var LeaveHistorys = _db.LeaveRequests
+            var LeaveHistorys = await _db.LeaveRequests
                 .Include(q => q.RequestingEmployee)
                 .Include(q => q.ApprovedBy)
-                .Include(q => q.LeaveType).ToList();
+                .Include(q => q.LeaveType).ToListAsync();
             //from database so we need _db we can access any thing in the context 
             return LeaveHistorys;
             //var leavetypes=_db.LeaveTypes.ToList();
         }
 
-        public LeaveRequest FindById(int id)
+        public async Task<LeaveRequest> FindById(int id)
         {
 
-            var LeaveHistorys = _db.LeaveRequests
+            var LeaveHistorys =await  _db.LeaveRequests
                 .Include(q => q.RequestingEmployee)
                 .Include(q => q.ApprovedBy)
-                .Include(q => q.LeaveType).FirstOrDefault(q=>q.Id==id);
+                .Include(q => q.LeaveType).FirstOrDefaultAsync(q=>q.Id==id);
             //from database so we need _db we can access any thing in the context 
             return LeaveHistorys;
             
         }
 
-        public ICollection<LeaveRequest> GetLeaveRequestsByEmployee(string employeeid)
+        public async Task<ICollection<LeaveRequest>> GetLeaveRequestsByEmployee(string employeeid)
         {
-            var leaveRequests = FindAll().Where(q => q.RequestingEmployeeId == employeeid).ToList();
-            return leaveRequests;
+            var leaveRequests = await FindAll();
+            return leaveRequests.Where(q => q.RequestingEmployeeId == employeeid).ToList();
+            
         }
 
-        public bool isExist(int id)
+        public async Task<bool> isExist(int id)
         {
-            var exists = _db.LeaveTypes.Any(q => q.Id == id);// is there any object in leavetypes has this id?
+            var exists = await _db.LeaveTypes.AnyAsync(q => q.Id == id);// is there any object in leavetypes has this id?
             return exists;
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             //if there is a  change if no changes then 
-            var changes = _db.SaveChanges();
+            var changes =await  _db.SaveChangesAsync();
             return changes > 0;
         }
 
-        public bool update(LeaveRequest entity)
+        public async Task<bool> update(LeaveRequest entity)
         {
             // we do the update then call the save , so it will find a change 
             _db.LeaveRequests.Update(entity);
-            return Save();
+            return await Save();
         }
    
 }

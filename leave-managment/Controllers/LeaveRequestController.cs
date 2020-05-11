@@ -11,7 +11,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 namespace leave_managment.Controllers
+
 {
     [Authorize] //had to be registered
     public class LeaveRequestController : Controller
@@ -38,11 +40,11 @@ namespace leave_managment.Controllers
         
         [Authorize(Roles ="Administrator")]
         // GET: LeaveRequest
-        public ActionResult Index()// the landing page
+        public async Task<ActionResult> Index()// the landing page
         {
             //when the admin want to see the leave requests and total number of each type
             //need a vm to that lists
-            var leaverequests = _leaveRequestRepo.FindAll();//getting them all
+            var leaverequests =await  _leaveRequestRepo.FindAll();//getting them all
             var leaverequestsmodel = _mapper.Map <List<LeaveRequestVM>> ( leaverequests); //mapped to my VM
             var model = new AdminLeaveRequestViewVM
             {
@@ -57,21 +59,21 @@ namespace leave_managment.Controllers
         }
 
         // GET: LeaveRequest/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
             
-            var leaveRequest = _leaveRequestRepo.FindById(id);
+            var leaveRequest = await _leaveRequestRepo.FindById(id);
             var model = _mapper.Map<LeaveRequestVM>(leaveRequest);
             return View(model);
         }
 
         //my work 
-        public ActionResult MyLeave()
+        public async Task<ActionResult> MyLeave()
         {
-            var employee = _userManager.GetUserAsync(User).Result;
+            var employee =await _userManager.GetUserAsync(User);
             var employeeid = employee.Id;
-            var employeeallocation = _leaveAllocationRepo.GetLeaveAllocationsByEmployee(employeeid);
-            var employeerequests = _leaveRequestRepo.GetLeaveRequestsByEmployee(employeeid);
+            var employeeallocation = await _leaveAllocationRepo.GetLeaveAllocationsByEmployee(employeeid);
+            var employeerequests =await _leaveRequestRepo.GetLeaveRequestsByEmployee(employeeid);
 
 
             var employeeallocationModel = _mapper.Map<List<LeaveAllocationVM>>(employeeallocation);
@@ -86,15 +88,15 @@ namespace leave_managment.Controllers
             return View(model);
         }
         //my work for index.cshtmll for the buttons
-        public ActionResult ApproveRequest(int id)
+        public async Task<ActionResult> ApproveRequest(int id)
         {
             try
             {
-                var user = _userManager.GetUserAsync(User).Result;
-                var leaveRequest = _leaveRequestRepo.FindById(id);
+                var user = await _userManager.GetUserAsync(User);
+                var leaveRequest = await _leaveRequestRepo.FindById(id);
                 var leaveTypeid = leaveRequest.LeaveTypeId;
                 var employeeid = leaveRequest.RequestingEmployeeId;
-                var allocation = _leaveAllocationRepo.GetLeaveAllocationsByEmployeeAndType(employeeid,leaveTypeid);
+                var allocation = await _leaveAllocationRepo.GetLeaveAllocationsByEmployeeAndType(employeeid,leaveTypeid);
 
                 //the NOof days in the alloc is less than requested 
                 int daysRequested = (int)(leaveRequest.EndDate - leaveRequest.StartDate).TotalDays;
@@ -104,8 +106,8 @@ namespace leave_managment.Controllers
                 leaveRequest.ApprovedById = user.Id;
                 leaveRequest.DateActioned = DateTime.Now;
 
-                _leaveRequestRepo.update(leaveRequest);
-                _leaveAllocationRepo.update(allocation);
+               await _leaveRequestRepo.update(leaveRequest);
+               await _leaveAllocationRepo.update(allocation);
              
                     return RedirectToAction(nameof(Index));
                 
@@ -116,20 +118,20 @@ namespace leave_managment.Controllers
             }
 
         }
-        public ActionResult RejectRequest(int id)
+        public async Task<ActionResult> RejectRequest(int id)
         {
             try
             {
 
 
-                var user = _userManager.GetUserAsync(User).Result;
-                var leaveRequest = _leaveRequestRepo.FindById(id);
+                var user = await _userManager.GetUserAsync(User);
+                var leaveRequest = await _leaveRequestRepo.FindById(id);
                 leaveRequest.Approved = false;
                 leaveRequest.ApprovedById = user.Id;
                 leaveRequest.DateActioned = DateTime.Now;
 
                 
-                _leaveRequestRepo.update(leaveRequest);
+               await _leaveRequestRepo.update(leaveRequest);
                 return RedirectToAction(nameof(Index));
                 
             }
@@ -140,11 +142,11 @@ namespace leave_managment.Controllers
         }
 
         //my work 
-        public ActionResult CancelRequest(int id)
+        public async Task<ActionResult> CancelRequest(int id)
         {
-            var leaverequests = _leaveRequestRepo.FindById(id);
+            var leaverequests = await _leaveRequestRepo.FindById(id);
             leaverequests.Cancelled = true;
-            _leaveRequestRepo.update(leaverequests);
+           await _leaveRequestRepo.update(leaverequests);
             return RedirectToAction("MyLeave");
            // if its normal remove and it worked but lets try his method to use the cancelled attribute
           /*  if (leaverequests == null)
@@ -163,10 +165,10 @@ namespace leave_managment.Controllers
             
         }
         // GET: LeaveRequest/Create
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
             //require selectlistitem of leavetype so we need link here
-            var leaveTypes = _leaveTypeRepo.FindAll();
+            var leaveTypes =await _leaveTypeRepo.FindAll();
             //i want this list and represent the data for ech item
             var leaveTypeItems = leaveTypes.Select(q => new SelectListItem
             {
@@ -183,14 +185,14 @@ namespace leave_managment.Controllers
         // POST: LeaveRequest/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(CreateLeaveRequestVM model)
+        public async Task<ActionResult> Create(CreateLeaveRequestVM model)
         {
         
             try
             {
                 var StartDate = Convert.ToDateTime(model.StartDate);
                 var EndDate = Convert.ToDateTime(model.EndDate);
-                var leaveTypes = _leaveTypeRepo.FindAll();
+                var leaveTypes = await _leaveTypeRepo.FindAll();
                 //i want this list and represent the data for ech item
                 var leaveTypeItems = leaveTypes.Select(q => new SelectListItem
                 {
@@ -208,8 +210,8 @@ namespace leave_managment.Controllers
                     ModelState.AddModelError("", "!!! start date can not be in the future of the end date DUDE!! ");
                     return View(model);
                 }
-                var employee = _userManager.GetUserAsync(User).Result; //retrive current user
-                var allocations = _leaveAllocationRepo.GetLeaveAllocationsByEmployeeAndType(employee.Id,model.LeaveTypeId);
+                var employee =await _userManager.GetUserAsync(User); //retrive current user
+                var allocations = await _leaveAllocationRepo.GetLeaveAllocationsByEmployeeAndType(employee.Id,model.LeaveTypeId);
                 int daysRequested =(int) (EndDate - StartDate).TotalDays;
                 if(daysRequested > allocations.NumberOfDays)
                 {
@@ -229,7 +231,7 @@ namespace leave_managment.Controllers
                     RequestComments = model.RequestComments
                 };
                 var leaveRequest = _mapper.Map<LeaveRequest>(leaveRequestmodel);
-                var isSuccess = _leaveRequestRepo.create(leaveRequest);
+                var isSuccess = await _leaveRequestRepo.create(leaveRequest);
                 if (!isSuccess)
                 {
                     ModelState.AddModelError("", "Something Went Wrong with Submitting your recored");

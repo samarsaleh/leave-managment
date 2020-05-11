@@ -9,6 +9,6 @@ namespace leave_managment.Contracts
     public interface ILeaveTypeRepository : IRepositoryBase<LeaveType>
    // this interface will inherit the base interface using its CLASS
     {
-        ICollection<LeaveType> GetEmployeesByLeaveType(int id);
+        Task<ICollection<LeaveType>> GetEmployeesByLeaveType(int id);
     }
 }

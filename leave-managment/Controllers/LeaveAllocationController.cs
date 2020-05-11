@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace leave_managment.Controllers
 {
@@ -36,11 +37,11 @@ namespace leave_managment.Controllers
         }
 
         // GET: LeaveAllocation
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
-            var leavetypes = _leaverepo.FindAll().ToList(); // returning collection of leavetype OBJECTS
+            var leavetypes = await _leaverepo.FindAll(); // returning collection of leavetype OBJECTS
             //so its need to map to get data from data class using the view model 
-            var mappedleavetypes = _mapper.Map<List<LeaveType>, List<LeaveTypeVM>>(leavetypes);//for recored 
+            var mappedleavetypes = _mapper.Map<List<LeaveType>, List<LeaveTypeVM>>(leavetypes.ToList());//for recored 
             var model = new CreateLeaveAllocationVM // defulat value coming from database
             {
                 Leavetypes = mappedleavetypes,
@@ -51,16 +52,16 @@ namespace leave_managment.Controllers
             return View(model);
         }
 
-        public  ActionResult SetLeave(int id)//find which leave type is clicked
+        public async Task<ActionResult> SetLeave(int id)//find which leave type is clicked
         {
-            var leavetype = _leaverepo.FindById(id);
+            var leavetype = await _leaverepo.FindById(id);
             //set the number that assosiated with this type in the employee
-            var employees = _userManager.GetUsersInRoleAsync("Employee").Result;
+            var employees =await _userManager.GetUsersInRoleAsync("Employee");
             //now i have the type and the employee 
             //retrive leave type and the employee and add ech recored to the employees 
             foreach (var emp in employees)
             {
-                if(_leaveallocationrepo.CheckAllocation(id,emp.Id))
+                if(await _leaveallocationrepo.CheckAllocation(id,emp.Id))
                     continue;  //if yes enter the iteration
 
                 var allocation = new LeaveAllocationVM
@@ -73,15 +74,15 @@ namespace leave_managment.Controllers
                 };
 
                 var leaveallocation =_mapper.Map<LeaveAllocation>(allocation);
-                _leaveallocationrepo.create(leaveallocation);
+               await _leaveallocationrepo.create(leaveallocation);
             }
             return RedirectToAction(nameof(Index));
 
         }
 
-        public ActionResult ListEmployees()
+        public async Task<ActionResult> ListEmployees()
         {
-            var employees= _userManager.GetUsersInRoleAsync("Employee").Result;
+            var employees=await _userManager.GetUsersInRoleAsync("Employee");
             var model = _mapper.Map<List<EmployeeVM>>(employees);
             //this gave an error in mapping cuz employee clas is extend identity user which has fn lastname .. etc which we removed it from the view 
 
@@ -90,11 +91,11 @@ namespace leave_managment.Controllers
         }
 
         // GET: LeaveAllocation/Details/5
-        public ActionResult Details(string id) //from int to string
+        public async Task<ActionResult> Details(string id) //from int to string
         {
-            var employee = _mapper.Map<EmployeeVM>(_userManager.FindByIdAsync(id).Result);//whenever we get data we need map it
+            var employee = _mapper.Map<EmployeeVM>(await _userManager.FindByIdAsync(id));//whenever we get data we need map it
             //retrive all the leave allocation for this employee
-            var allocations =_mapper.Map<List<LeaveAllocationVM>>(  _leaveallocationrepo.GetLeaveAllocationsByEmployee(id)); //list to VM
+            var allocations =_mapper.Map<List<LeaveAllocationVM>>( await _leaveallocationrepo.GetLeaveAllocationsByEmployee(id)); //list to VM
             var model = new ViewAllocationVM
             {
                 Employee = employee,
@@ -128,9 +129,9 @@ namespace leave_managment.Controllers
         }
 
         // GET: LeaveAllocation/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(int id)
         {
-            var leaveallocation = _leaveallocationrepo.FindById(id);
+            var leaveallocation = await _leaveallocationrepo.FindById(id);
             var model = _mapper.Map<EditLeaveAllocationVM>(leaveallocation); //we made a new VM 
             return View(model);
         }
@@ -138,7 +139,7 @@ namespace leave_managment.Controllers
         // POST: LeaveAllocation/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(EditLeaveAllocationVM model)
+        public async Task<ActionResult> Edit(EditLeaveAllocationVM model)
         {
             try
             {
@@ -146,10 +147,10 @@ namespace leave_managment.Controllers
                 {
                     return View(model);
                 }
-                var recored = _leaveallocationrepo.FindById(model.Id);
+                var recored =await _leaveallocationrepo.FindById(model.Id);
                 recored.NumberOfDays = model.NumberOfDays;
 
-                var isSuccess= _leaveallocationrepo.update(recored);
+                var isSuccess=await _leaveallocationrepo.update(recored);
                 if (!isSuccess)
                 {
                     ModelState.AddModelError("","Error samooooooooooraaaa while saving");
